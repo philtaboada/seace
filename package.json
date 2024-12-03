@@ -35,6 +35,7 @@
     "node-cron": "^3.0.2",
     "puppeteer": "^18.2.1",
     "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "puppeteer-extra-plugin-user-preferences": "^2.4.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^4.1.2",

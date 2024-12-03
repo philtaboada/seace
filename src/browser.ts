@@ -1,6 +1,10 @@
 import { Browser } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
+
+
+const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const UserPreferencesPlugin = require("puppeteer-extra-plugin-user-preferences");
+puppeteer.use(StealthPlugin());
 
 export async function startBrowser(): Promise<Browser> {
 	try {
