@@ -1,0 +1,5 @@
+cron:
+
+- description: "Procesar notificaciones"
+  url: /api/tasks/proccessNotifications
+  schedule: every day 11:00

@@ -1,0 +1,16 @@
+[Unit]
+Description=Seace
+#Documentation=https://example.com
+After=network.target
+
+[Service]
+Environment=PORT=80
+Environment=NODE_ENV=production
+Type=simple
+User=root
+WorkingDirectory=/home/vampi/seace
+ExecStart=/usr/bin/node /home/vampi/seace/dist/main.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

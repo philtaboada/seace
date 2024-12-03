@@ -1,0 +1,6 @@
+runtime: nodejs16
+service: seace
+instance_class: F4
+
+automatic_scaling:
+  min_instances: 1
