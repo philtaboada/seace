@@ -707,9 +707,9 @@ export class SeaceScraperV6 {
             this.ORIGINAL_IMAGE = `/tmp/${code}.jpg`
             this.OUTPUT_IMAGE = `/tmp/${code}_scrop.jpg`
             const mainPage = await this.browser.newPage()
-
+      
             try {
-                await mainPage.goto(this.url)
+                await mainPage.goto(this.url, {timeout: 1000 * 60 * 5})
                 let startCaptcha = false
                 let pageIndex = 0
                 mainPage.on('response', async (response: any) => {
