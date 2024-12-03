@@ -1,34 +1,16 @@
+require('dotenv').config();
 import { Browser } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
-
-
-const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-const UserPreferencesPlugin = require("puppeteer-extra-plugin-user-preferences");
-puppeteer.use(StealthPlugin());
+//a651b2eNN2bf7a42BBd672ea2fVVa530eVV2c5e2
 
 export async function startBrowser(): Promise<Browser> {
 	try {
-    puppeteer.use(
-      UserPreferencesPlugin({
-        userPrefs: {
-          download: {
-            prompt_for_download: false,
-            // open_pdf_in_system_reader: true,
-            default_directory: '/home/vampi/Downloads',
-            automatic_downloads: 1,
-          },
-          // disable allow-multiple-downloads popup
-          profile: {
-            default_content_setting_values: {
-              automatic_downloads: 1,
-            },
-          },
-        },
-      })
-    );
+    const API_KEY = process.env.SCRAPER_API_KEY;
+    const SCRAPER_API_URL = `http://api.scraperapi.com?api_key=${API_KEY}&url=http://httpbin.org/ip`; 
     return await puppeteer.launch({
       headless: false,
       args: [ 
+        `--proxy-server=${SCRAPER_API_URL}`,
         '--no-sandbox', 
         '--disable-setuid-sandbox',
       ],
