@@ -48,7 +48,7 @@ export class AppController {
         // this.appService.checkFiles();
         // this.appService.deleteFiles();
 
-        if (process.env.NODE_ENV === 'production') {
+        //if (process.env.NODE_ENV === 'production') {
             cron.schedule('*/5 * * * *', async () => {
                 if (!this.browserInstanceOne) {
                     await this.processScrapSeaceOne();
@@ -74,11 +74,11 @@ export class AppController {
             });
             this.processScrapSeaceOne()
             this.processScrapSeaceFive()
-        } else {
-            this.processScrapSeaceOne()
+        //} else {
+            //this.processScrapSeaceOne()
             //this.processScrapSeaceFive()
             //this.startTestOne()
-        }
+        //}
     }
 
     async processScrapSeaceOne(): Promise<void> {

@@ -691,7 +691,12 @@ export class SeaceScraperV6 {
 
     private async handleCaptchaDetection(mainPage: Page): Promise<boolean> {
         try {
-            // Simular comportamiento humano con delays variables
+            // Verificar si la página está abierta antes de continuar
+            if (mainPage.isClosed()) {
+                console.log('Página cerrada, no se puede continuar');
+                return false;
+            }
+
             const baseDelay = this.getRandomDelay(2000, 5000);
             await this.delay(baseDelay);
 
@@ -701,10 +706,15 @@ export class SeaceScraperV6 {
                 this.pattern2,
                 this.pattern3
             ];
-
+            
             const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
-            return await selectedPattern.call(this, mainPage);
-
+            
+            // Verificar nuevamente si la página sigue abierta
+            if (!mainPage.isClosed()) {
+                return await selectedPattern.call(this, mainPage);
+            }
+            
+            return false;
         } catch (error) {
             console.error('Error en manejo de CAPTCHA:', error);
             return false;
@@ -720,12 +730,28 @@ export class SeaceScraperV6 {
     }
 
     private async pattern2(page: Page): Promise<boolean> {
-        // Patrón 2: Navegar a otra página y volver
-        await page.goto('https://prod2.seace.gob.pe/seacebus-uiwd-pub/index.html');
-        await this.delay(this.getRandomDelay(3000, 6000));
-        await page.goBack();
-        await this.delay(this.getRandomDelay(2000, 4000));
-        return true;
+        try {
+            // Verificar si la página sigue abierta
+            if (!page.isClosed()) {
+                // Guardar la URL original
+                const originalUrl = page.url();
+                
+                await page.goto('https://prod2.seace.gob.pe/seacebus-uiwd-pub/index.html');
+                await this.delay(this.getRandomDelay(3000, 6000));
+                
+                // Verificar nuevamente si la página sigue abierta
+                if (!page.isClosed()) {
+                    // En lugar de usar goBack, navegar directamente a la URL original
+                    await page.goto(originalUrl);
+                    await this.delay(this.getRandomDelay(2000, 4000));
+                }
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.log('Error en pattern2:', error);
+            return false;
+        }
     }
 
     private async pattern3(page: Page): Promise<boolean> {
@@ -795,6 +821,7 @@ export class SeaceScraperV6 {
         }
     }
 
+
     async startScrap(
         objetoIndex: number,
         departamentoIndex: number,
@@ -813,8 +840,9 @@ export class SeaceScraperV6 {
             this.ORIGINAL_IMAGE = `/tmp/${code}.jpg`
             this.OUTPUT_IMAGE = `/tmp/${code}_scrop.jpg`
             const mainPage = await this.browser.newPage()
+
             try {
-                await mainPage.goto(this.url, { timeout: 1000 * 60 * 5 })
+                await mainPage.goto(this.url)
                 let startCaptcha = false
                 let pageIndex = 0
                 mainPage.on('response', async (response: any) => {
@@ -829,69 +857,13 @@ export class SeaceScraperV6 {
 
                             }
                             if (text.includes('Por favor actualice el navegador')) {
-                                console.log('CAPTCHA detectado - Intentando evadir...');
-
-                                let retryCount = 0;
-                                const maxRetries = 3;
-
-                                while (retryCount < maxRetries) {
-                                    try {
-                                        // Verificar si la página está disponible
-                                        await mainPage.waitForFunction(() => document.readyState === 'complete', {
-                                            timeout: 5000
-                                        });
-
-                                        const success = await this.handleCaptchaDetection(mainPage);
-
-                                        if (success) {
-                                            try {
-                                                // Intentar continuar con la operación dentro de un try-catch
-                                                await mainPage.waitForSelector("[id^='tbBuscador:idFormBuscarProceso:btnBuscarSel']", {
-                                                    timeout: 5000
-                                                });
-
-                                                await mainPage.evaluate(() => {
-                                                    const buttonSubmit = document.querySelector(
-                                                        "[id^='tbBuscador:idFormBuscarProceso:btnBuscarSel']"
-                                                    );
-                                                    if (buttonSubmit) (buttonSubmit as HTMLElement).click();
-                                                });
-
-                                                // Esperar resultado
-                                                await this.delay(this.getRandomDelay(3000, 5000));
-
-                                                // Verificar si seguimos bloqueados
-                                                const stillBlocked = await mainPage.evaluate(() => {
-                                                    return document.body.innerText.includes('Por favor actualice el navegador');
-                                                }).catch(() => true); // Si hay error, asumimos que seguimos bloqueados
-
-                                                if (!stillBlocked) {
-                                                    break;
-                                                }
-                                            } catch (evalError) {
-                                                console.log('Error al interactuar con la página, reintentando...');
-                                                await this.delay(2000);
-                                            }
-                                        }
-                                    } catch (pageError) {
-                                        console.log('Error de navegación, esperando reconexión...');
-                                        await this.delay(3000);
-                                    }
-
-                                    retryCount++;
-                                    // Aumentar el delay exponencialmente en cada intento
-                                    await this.delay(Math.pow(2, retryCount) * 1000);
-                                }
-                                if (retryCount >= maxRetries) {
-                                    console.log('Máximo de intentos alcanzado - Cambiando estrategia...');
-                                    const success = await this.handleAlternativeStrategy(mainPage);
-                                    if (success) {
-                                        await this.delay(1000 * 60 * 1); // Esperar 5 minutos
-                                    } else {
-                                        console.log('Estrategia alternativa falló - Terminando proceso...');
-                                        throw new Error('No se pudo superar la detección después de múltiples intentos');
-                                    }
-                                }
+                                console.log('Detectados por el capcha');
+                                const random = this.getRandomArbitrary(1, 20)
+                                await this.delay(1000 * random)
+                                await mainPage.evaluate(() => {
+                                    const buttonSubmit: any = document.querySelector("[id^='tbBuscador:idFormBuscarProceso:btnBuscarSel']")
+                                    buttonSubmit.click()
+                                })
                             } else {
                                 startCaptcha = false
                                 await this.delay(3000)
