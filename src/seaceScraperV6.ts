@@ -827,8 +827,8 @@ export class SeaceScraperV6 {
         departamentoIndex: number,
         yearIndex: number
     ): Promise<void> {
-        this.downloadPage = await this.browser.newPage()
-        this.downloadPage.goto('/home/ubuntu/download')
+        //this.downloadPage = await this.browser.newPage()
+        //this.downloadPage.goto('chrome://downloads/')
         const objetoContratacion = objetos[objetoIndex]
         const departamento = departmentos[departamentoIndex]
         return new Promise(async (resolve, reject) => {
