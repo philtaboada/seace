@@ -689,6 +689,74 @@ export class SeaceScraperV6 {
         return Math.trunc(random)
     }
 
+    private async handleCaptchaDetection(mainPage: Page): Promise<boolean> {
+        try {
+            // Simular comportamiento humano con delays variables
+            const baseDelay = this.getRandomDelay(2000, 5000);
+            await this.delay(baseDelay);
+    
+            // Rotar entre diferentes patrones de navegación
+            const patterns = [
+                this.pattern1,
+                this.pattern2,
+                this.pattern3
+            ];
+            
+            const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
+            return await selectedPattern.call(this, mainPage);
+    
+        } catch (error) {
+            console.error('Error en manejo de CAPTCHA:', error);
+            return false;
+        }
+    }
+    
+    private async pattern1(page: Page): Promise<boolean> {
+        // Patrón 1: Recargar y esperar
+        await this.delay(this.getRandomDelay(1000, 3000));
+        await page.reload({ waitUntil: 'networkidle0' });
+        await this.delay(this.getRandomDelay(2000, 4000));
+        return true;
+    }
+    
+    private async pattern2(page: Page): Promise<boolean> {
+        // Patrón 2: Navegar a otra página y volver
+        await page.goto('https://prod2.seace.gob.pe/seacebus-uiwd-pub/index.html');
+        await this.delay(this.getRandomDelay(3000, 6000));
+        await page.goBack();
+        await this.delay(this.getRandomDelay(2000, 4000));
+        return true;
+    }
+    
+    private async pattern3(page: Page): Promise<boolean> {
+        // Patrón 3: Simular interacción humana
+        await this.simulateHumanBehavior(page);
+        await this.delay(this.getRandomDelay(2000, 5000));
+        return true;
+    }
+    
+    private async simulateHumanBehavior(page: Page): Promise<void> {
+        // Simular movimientos de mouse y scrolling aleatorio
+        await page.mouse.move(
+            200 + Math.random() * 100,
+            300 + Math.random() * 100,
+            { steps: 10 }
+        );
+        
+        await page.evaluate(() => {
+            window.scrollTo({
+                top: Math.random() * 100,
+                behavior: 'smooth'
+            });
+        });
+        
+        await this.delay(this.getRandomDelay(1000, 2000));
+    }
+    
+    private getRandomDelay(min: number, max: number): number {
+        return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+
     async startScrap(
         objetoIndex: number,
         departamentoIndex: number,
@@ -707,7 +775,6 @@ export class SeaceScraperV6 {
             this.ORIGINAL_IMAGE = `/tmp/${code}.jpg`
             this.OUTPUT_IMAGE = `/tmp/${code}_scrop.jpg`
             const mainPage = await this.browser.newPage()
-      
             try {
                 await mainPage.goto(this.url, {timeout: 1000 * 60 * 5})
                 let startCaptcha = false
@@ -724,15 +791,45 @@ export class SeaceScraperV6 {
 
                             }
                             if (text.includes('Por favor actualice el navegador')) {
-                                console.log('Detectados por el capcha');
-                                const random = this.getRandomArbitrary(1, 20)
-                                await this.delay(1000 * random)
-                                const refreshPage = await this.browser.newPage()
-                                await refreshPage.goto(this.url)
-                                await mainPage.evaluate(() => {
-                                    const buttonSubmit: any = document.querySelector("[id^='tbBuscador:idFormBuscarProceso:btnBuscarSel']")
-                                    buttonSubmit.click()
-                                })
+                                console.log('CAPTCHA detectado - Intentando evadir...');
+                    
+                                let retryCount = 0;
+                                const maxRetries = 3;
+                                
+                                while (retryCount < maxRetries) {
+                                    const success = await this.handleCaptchaDetection(mainPage);
+                                    
+                                    if (success) {
+                                        // Intentar continuar con la operación
+                                        await mainPage.evaluate(() => {
+                                            const buttonSubmit: any = document.querySelector(
+                                                "[id^='tbBuscador:idFormBuscarProceso:btnBuscarSel']"
+                                            );
+                                            if (buttonSubmit) buttonSubmit.click();
+                                        });
+                                        
+                                        // Esperar resultado
+                                        await this.delay(this.getRandomDelay(3000, 5000));
+                                        
+                                        // Verificar si seguimos bloqueados
+                                        const stillBlocked = await mainPage.evaluate(() => {
+                                            return document.body.innerText.includes('Por favor actualice el navegador');
+                                        });
+                                        
+                                        if (!stillBlocked) {
+                                            break;
+                                        }
+                                    }
+                                    
+                                    retryCount++;
+                                    // Aumentar el delay exponencialmente en cada intento
+                                    await this.delay(Math.pow(2, retryCount) * 1000);
+                                }
+                                if (retryCount >= maxRetries) {
+                                    console.log('Máximo de intentos alcanzado - Cambiando estrategia...');
+                                    // Implementar estrategia alternativa como cambiar IP o esperar más tiempo
+                                    await this.delay(1000 * 60 * 5); // Esperar 5 minutos
+                                }
                             } else {
                                 startCaptcha = false
                                 await this.delay(3000)
