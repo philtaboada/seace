@@ -20,8 +20,10 @@ if (process.env.NODE_ENV === 'production') {
     horviString = process.env.DB_HOST || '';
     seaceString = process.env.DB_SEACE || '';
 } else {
-    horviString = process.env.DB_HOST_DEV || '';
-    seaceString = process.env.DB_SEACE_DEV || '';
+    horviString = process.env.DB_HOST || '';
+    seaceString = process.env.DB_SEACE || '';
+    // horviString = process.env.DB_HOST_DEV || '';
+    // seaceString = process.env.DB_SEACE_DEV || '';
 }
 
 console.log(horviString);
