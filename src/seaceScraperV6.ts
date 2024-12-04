@@ -447,7 +447,7 @@ export class SeaceScraperV6 {
                                     // Volver a string el valorReferencial
                                     data.valorReferencial = data.valorReferencial.toLocaleString('en-US');
                                     console.log('creando porque tiene valorReferencial >= 200000', data.valorReferencial);
-                                    if (typeof(data.valorReferencial) === 'string') {
+                                    if (typeof (data.valorReferencial) === 'string') {
                                         console.log('Se agrega a la base de datos como string, el texto tiene que se rlarog para saber si se sube a la base de datos o no', data.valorReferencial);
                                         await this.appService.create(data);
                                     }
@@ -694,23 +694,23 @@ export class SeaceScraperV6 {
             // Simular comportamiento humano con delays variables
             const baseDelay = this.getRandomDelay(2000, 5000);
             await this.delay(baseDelay);
-    
+
             // Rotar entre diferentes patrones de navegación
             const patterns = [
                 this.pattern1,
                 this.pattern2,
                 this.pattern3
             ];
-            
+
             const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
             return await selectedPattern.call(this, mainPage);
-    
+
         } catch (error) {
             console.error('Error en manejo de CAPTCHA:', error);
             return false;
         }
     }
-    
+
     private async pattern1(page: Page): Promise<boolean> {
         // Patrón 1: Recargar y esperar
         await this.delay(this.getRandomDelay(1000, 3000));
@@ -718,7 +718,7 @@ export class SeaceScraperV6 {
         await this.delay(this.getRandomDelay(2000, 4000));
         return true;
     }
-    
+
     private async pattern2(page: Page): Promise<boolean> {
         // Patrón 2: Navegar a otra página y volver
         await page.goto('https://prod2.seace.gob.pe/seacebus-uiwd-pub/index.html');
@@ -727,14 +727,14 @@ export class SeaceScraperV6 {
         await this.delay(this.getRandomDelay(2000, 4000));
         return true;
     }
-    
+
     private async pattern3(page: Page): Promise<boolean> {
         // Patrón 3: Simular interacción humana
         await this.simulateHumanBehavior(page);
         await this.delay(this.getRandomDelay(2000, 5000));
         return true;
     }
-    
+
     private async simulateHumanBehavior(page: Page): Promise<void> {
         // Simular movimientos de mouse y scrolling aleatorio
         await page.mouse.move(
@@ -742,19 +742,57 @@ export class SeaceScraperV6 {
             300 + Math.random() * 100,
             { steps: 10 }
         );
-        
+
         await page.evaluate(() => {
             window.scrollTo({
                 top: Math.random() * 100,
                 behavior: 'smooth'
             });
         });
-        
+
         await this.delay(this.getRandomDelay(1000, 2000));
     }
-    
+
     private getRandomDelay(min: number, max: number): number {
         return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+
+    private async handleAlternativeStrategy(mainPage: Page): Promise<boolean> {
+        try {
+            console.log('Iniciando estrategia alternativa...');
+
+            // Estrategia 1: Espera prolongada con intervalos aleatorios
+            const waitIntervals = [5, 8, 10, 15]; // minutos
+            const randomInterval = waitIntervals[Math.floor(Math.random() * waitIntervals.length)];
+            console.log(`Esperando ${randomInterval} minutos antes de reintentar...`);
+            await this.delay(1000 * 60 * randomInterval);
+
+            // Estrategia 2: Limpiar cookies y caché
+            const client = await mainPage.target().createCDPSession();
+            await client.send('Network.clearBrowserCookies');
+            await client.send('Network.clearBrowserCache');
+
+            // Estrategia 3: Cambiar headers y viewport
+            await mainPage.setViewport({
+                width: 1366 + Math.floor(Math.random() * 200),
+                height: 768 + Math.floor(Math.random() * 200)
+            });
+
+            // Estrategia 4: Navegar a la página de inicio y esperar
+            await mainPage.goto('https://prod2.seace.gob.pe/seacebus-uiwd-pub/index.html');
+            await this.delay(this.getRandomDelay(3000, 5000));
+
+            // Estrategia 5: Recargar con diferentes flags
+            await mainPage.reload({
+                waitUntil: 'networkidle0',
+                timeout: 60000
+            });
+
+            return true;
+        } catch (error) {
+            console.error('Error en estrategia alternativa:', error);
+            return false;
+        }
     }
 
     async startScrap(
@@ -776,7 +814,7 @@ export class SeaceScraperV6 {
             this.OUTPUT_IMAGE = `/tmp/${code}_scrop.jpg`
             const mainPage = await this.browser.newPage()
             try {
-                await mainPage.goto(this.url, {timeout: 1000 * 60 * 5})
+                await mainPage.goto(this.url, { timeout: 1000 * 60 * 5 })
                 let startCaptcha = false
                 let pageIndex = 0
                 mainPage.on('response', async (response: any) => {
@@ -792,43 +830,67 @@ export class SeaceScraperV6 {
                             }
                             if (text.includes('Por favor actualice el navegador')) {
                                 console.log('CAPTCHA detectado - Intentando evadir...');
-                    
+
                                 let retryCount = 0;
                                 const maxRetries = 3;
-                                
+
                                 while (retryCount < maxRetries) {
-                                    const success = await this.handleCaptchaDetection(mainPage);
-                                    
-                                    if (success) {
-                                        // Intentar continuar con la operación
-                                        await mainPage.evaluate(() => {
-                                            const buttonSubmit: any = document.querySelector(
-                                                "[id^='tbBuscador:idFormBuscarProceso:btnBuscarSel']"
-                                            );
-                                            if (buttonSubmit) buttonSubmit.click();
+                                    try {
+                                        // Verificar si la página está disponible
+                                        await mainPage.waitForFunction(() => document.readyState === 'complete', {
+                                            timeout: 5000
                                         });
-                                        
-                                        // Esperar resultado
-                                        await this.delay(this.getRandomDelay(3000, 5000));
-                                        
-                                        // Verificar si seguimos bloqueados
-                                        const stillBlocked = await mainPage.evaluate(() => {
-                                            return document.body.innerText.includes('Por favor actualice el navegador');
-                                        });
-                                        
-                                        if (!stillBlocked) {
-                                            break;
+
+                                        const success = await this.handleCaptchaDetection(mainPage);
+
+                                        if (success) {
+                                            try {
+                                                // Intentar continuar con la operación dentro de un try-catch
+                                                await mainPage.waitForSelector("[id^='tbBuscador:idFormBuscarProceso:btnBuscarSel']", {
+                                                    timeout: 5000
+                                                });
+
+                                                await mainPage.evaluate(() => {
+                                                    const buttonSubmit = document.querySelector(
+                                                        "[id^='tbBuscador:idFormBuscarProceso:btnBuscarSel']"
+                                                    );
+                                                    if (buttonSubmit) (buttonSubmit as HTMLElement).click();
+                                                });
+
+                                                // Esperar resultado
+                                                await this.delay(this.getRandomDelay(3000, 5000));
+
+                                                // Verificar si seguimos bloqueados
+                                                const stillBlocked = await mainPage.evaluate(() => {
+                                                    return document.body.innerText.includes('Por favor actualice el navegador');
+                                                }).catch(() => true); // Si hay error, asumimos que seguimos bloqueados
+
+                                                if (!stillBlocked) {
+                                                    break;
+                                                }
+                                            } catch (evalError) {
+                                                console.log('Error al interactuar con la página, reintentando...');
+                                                await this.delay(2000);
+                                            }
                                         }
+                                    } catch (pageError) {
+                                        console.log('Error de navegación, esperando reconexión...');
+                                        await this.delay(3000);
                                     }
-                                    
+
                                     retryCount++;
                                     // Aumentar el delay exponencialmente en cada intento
                                     await this.delay(Math.pow(2, retryCount) * 1000);
                                 }
                                 if (retryCount >= maxRetries) {
                                     console.log('Máximo de intentos alcanzado - Cambiando estrategia...');
-                                    // Implementar estrategia alternativa como cambiar IP o esperar más tiempo
-                                    await this.delay(1000 * 60 * 5); // Esperar 5 minutos
+                                    const success = await this.handleAlternativeStrategy(mainPage);
+                                    if (success) {
+                                        await this.delay(1000 * 60 * 1); // Esperar 5 minutos
+                                    } else {
+                                        console.log('Estrategia alternativa falló - Terminando proceso...');
+                                        throw new Error('No se pudo superar la detección después de múltiples intentos');
+                                    }
                                 }
                             } else {
                                 startCaptcha = false
