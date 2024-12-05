@@ -706,14 +706,14 @@ export class SeaceScraperV6 {
                 this.pattern2,
                 this.pattern3
             ];
-            
+
             const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
-            
+
             // Verificar nuevamente si la página sigue abierta
             if (!mainPage.isClosed()) {
                 return await selectedPattern.call(this, mainPage);
             }
-            
+
             return false;
         } catch (error) {
             console.error('Error en manejo de CAPTCHA:', error);
@@ -735,10 +735,10 @@ export class SeaceScraperV6 {
             if (!page.isClosed()) {
                 // Guardar la URL original
                 const originalUrl = page.url();
-                
+
                 await page.goto('https://prod2.seace.gob.pe/seacebus-uiwd-pub/index.html');
                 await this.delay(this.getRandomDelay(3000, 6000));
-                
+
                 // Verificar nuevamente si la página sigue abierta
                 if (!page.isClosed()) {
                     // En lugar de usar goBack, navegar directamente a la URL original
@@ -840,6 +840,16 @@ export class SeaceScraperV6 {
             this.ORIGINAL_IMAGE = `/tmp/${code}.jpg`
             this.OUTPUT_IMAGE = `/tmp/${code}_scrop.jpg`
             const mainPage = await this.browser.newPage()
+
+            const isStealthActive = await mainPage.evaluate(() => navigator.webdriver);
+            console.log('Stealth mode active:', !isStealthActive);
+
+            const stealthStatus = await mainPage.evaluate(() => ({
+                webdriver: navigator.webdriver,
+                userAgent: navigator.userAgent,
+                languages: navigator.languages,
+            }));
+            console.log('Browser Details:', stealthStatus);
 
             try {
                 await mainPage.goto(this.url)
