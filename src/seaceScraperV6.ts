@@ -833,7 +833,7 @@ export class SeaceScraperV6 {
         const departamento = departmentos[departamentoIndex]
         return new Promise(async (resolve, reject) => {
             setTimeout(async () => {
-                await this.checkDownloads()
+                //await this.checkDownloads()
                 return reject('Navegador congelado por mas de 30 min')
             }, 1000 * 60 * 30)
             const code = this.generateCode()
@@ -901,6 +901,7 @@ export class SeaceScraperV6 {
                 await mainPage.waitForSelector("[id='tbBuscador:idFormBuscarProceso:anioConvocatoria_panel']")
 
                 if (found) {
+                    console.log('yearIndex', yearIndex);
                     await mainPage.evaluate((obj: any) => {
                         let objectSelector = null
                         let objectSelectorIndex = 0
@@ -913,12 +914,14 @@ export class SeaceScraperV6 {
                         }
                         (objectSelector.querySelectorAll("li")[obj.objetoIndex + 1] as any).click()
                         try {
-                            const yearSelector: any = document.querySelectorAll("[id='tbBuscador:idFormBuscarProceso:anioConvocatoria_panel'] li")[obj.yearIndex]
-                            this.delay(2000)
-                            yearSelector.click()
+                            // Primero hacer click en el dropdown para abrirlo
+                            (document.querySelector("[id='tbBuscador:idFormBuscarProceso:anioConvocatoria_label']") as HTMLElement).click();
+                            
+                            // Luego seleccionar el año
+                            const yearItems = document.querySelectorAll("[id='tbBuscador:idFormBuscarProceso:anioConvocatoria_panel'] li");
+                            (yearItems[obj.yearIndex] as HTMLElement).click();
                         } catch (error) {
-                            console.log('Error al escoger el año 2024')
-                            console.log(error)
+                            console.log('Error al escoger el año:', error);
                         }
                         (document.querySelectorAll("[id='tbBuscador:idFormBuscarProceso:departamento_panel'] li")[obj.departamentoIndex + 1] as any).click()
                         const buttonSubmit: any = document.querySelector("[id^='tbBuscador:idFormBuscarProceso:btnBuscarSel']")

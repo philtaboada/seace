@@ -16,7 +16,7 @@ export class AppController {
     private stateOne = {
         objetoIndex: 0,
         departamentoIndex: 0,
-        yearIndex: 1
+        yearIndex: 2
     }
     private stateTwo = {
         objetoIndex: 0,
@@ -38,17 +38,17 @@ export class AppController {
     }
 
     async onModuleInit() {
-        this.stateOne = await this.appService.getStateSeace(1);
+        this.stateOne = await this.appService.getStateSeace(2);
         this.stateTwo = await this.appService.getStateSeace(2);
 
-        // cron.schedule('0 0 */1 * * *', async () => {
-        //     this.appService.checkFiles();
-        //     this.appService.deleteFiles();
-        // });
-        // this.appService.checkFiles();
-        // this.appService.deleteFiles();
+        cron.schedule('0 0 */1 * * *', async () => {
+            //this.appService.checkFiles();
+            //this.appService.deleteFiles();
+        });
+        //this.appService.checkFiles();
+        //this.appService.deleteFiles();
 
-        //if (process.env.NODE_ENV === 'production') {
+        if (process.env.NODE_ENV === 'production') {
             cron.schedule('*/5 * * * *', async () => {
                 if (!this.browserInstanceOne) {
                     await this.processScrapSeaceOne();
@@ -74,11 +74,9 @@ export class AppController {
             });
             this.processScrapSeaceOne()
             this.processScrapSeaceFive()
-        //} else {
-            //this.processScrapSeaceOne()
-            //this.processScrapSeaceFive()
-            //this.startTestOne()
-        //}
+        } else {
+            this.startTestOne()
+        }
     }
 
     async processScrapSeaceOne(): Promise<void> {
