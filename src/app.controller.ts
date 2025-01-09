@@ -3,6 +3,7 @@ import * as cron from 'node-cron';
 import { AppService } from './app.service';
 import { startBrowser } from './browser';
 import { SeaceScraperV6 } from './seaceScraperV6';
+import { SeaceScraperV7 } from './seaceScraperV7';
 
 @Controller()
 export class AppController {
@@ -254,7 +255,7 @@ export class AppController {
 
     async startTestOne() {
         const browserInstance = await startBrowser();
-        const seaceScraper = new SeaceScraperV6(this.appService, browserInstance);
+        const seaceScraper = new SeaceScraperV7(this.appService, browserInstance);
         try {
             await seaceScraper.startScrap(0, 4, 2);
             console.log('finalizando XXXXXXXXX');
