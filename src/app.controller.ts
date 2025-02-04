@@ -17,7 +17,7 @@ export class AppController {
     private stateOne = {
         objetoIndex: 0,
         departamentoIndex: 0,
-        yearIndex: 2
+        yearIndex: 1
     }
     private stateTwo = {
         objetoIndex: 0,
