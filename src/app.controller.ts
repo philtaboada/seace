@@ -39,7 +39,7 @@ export class AppController {
     }
 
     async onModuleInit() {
-        this.stateOne = await this.appService.getStateSeace(2);
+        this.stateOne = await this.appService.getStateSeace(1);
         this.stateTwo = await this.appService.getStateSeace(2);
 
         cron.schedule('0 0 */1 * * *', async () => {
